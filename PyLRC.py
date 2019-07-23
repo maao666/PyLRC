@@ -187,6 +187,8 @@ class Lrc:
         The parameter line_text has to be in LRC format.
         It can be either a label like '[ti:Foobar]' 
             or lyrics like '[00:01:001][tr]Foobar'
+        Usage: 
+        >>> your_lrc_instance.insert_line("[ti:Foorbar]")
         '''
         self._parse_individual_line(line_text)
 
