@@ -182,6 +182,14 @@ class Lrc:
         self._get_plain_text()
         return self._lyrics_plain_text
 
+    def insert_line(self, line_text: str):
+        '''Insert or modify a line to the current lyrics.
+        The parameter line_text has to be in LRC format.
+        It can be either a label like '[ti:Foobar]' 
+            or lyrics like '[00:01:001][tr]Foobar'
+        '''
+        self._parse_individual_line(line_text)
+
     def _tag_handler(self, tag_text: str):
         '''Parse a tag such as "[ar: someone]" to a key-value pair like {"artist": "someone"}
         and write it to the dict _parsed_lrc
@@ -270,21 +278,25 @@ class Lrc:
             self._parsed_lrc['{0:08d}'.format(
                 timestamp_iter[0])] = updated_dict
 
+    def _parse_individual_line(self, text_to_parse: str):
+        try:
+            tag_text = text_to_parse[text_to_parse.find(
+                '[') + 1:text_to_parse.find(']')]
+            if self._is_timestamp(tag_text):
+                self._lyrics_handler(text_to_parse)
+            else:
+                self._tag_handler(text_to_parse)
+        except:
+            logging.info(
+                "No label detected at \"{}\". Skipping...".format(text_to_parse))
+        
+
     def _launch_parser(self):
         '''The root method for parser'''
         lrc_line_list = self._raw_lrc.split('\n')
 
         for individual_line in lrc_line_list:
-            try:
-                tag_text = individual_line[individual_line.find(
-                    '[') + 1:individual_line.find(']')]
-            except:
-                logging.info(
-                    "No label detected at \"{}\". Skipping...".format(individual_line))
-            if self._is_timestamp(tag_text):
-                self._lyrics_handler(individual_line)
-            else:
-                self._tag_handler(individual_line)
+            self._parse_individual_line(individual_line)
 
         self._parsing_required = False
 
@@ -343,7 +355,7 @@ class Lrc:
     def set_current_timestamp(self, timestamp: str):
         self.current_timestamp_in_ms = self._parse_timestamp_text(timestamp)[0]
 
-    def lrc_interpreter(self, lrcrawtext):
+    def _lrc_interpreter(self, lrcrawtext):
         '''Obsolete method'''
         lrc_line_list = lrcrawtext.split('\n')
         lrc_converted_list = []
